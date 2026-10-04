@@ -29,11 +29,15 @@ class ScreenCaptureService : Service() {
 	private val serviceJob = SupervisorJob()
 	private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
 	private lateinit var captureEngine: ScreenCaptureEngine
+	private lateinit var overlayManager: OverlayManager
+	private lateinit var badgeManager: FloatingBadgeManager
 
 	override fun onCreate() {
 		super.onCreate()
 		mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
 		captureEngine = ScreenCaptureEngine(this)
+		overlayManager = OverlayManager(this)
+		badgeManager = FloatingBadgeManager(this)
 		createNotificationChannel()
 	}
 
@@ -67,16 +71,24 @@ class ScreenCaptureService : Service() {
 	}
 
 	private fun initMediaProjection(resultCode: Int, data: Intent) {
-		mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data)
+		val projection = mediaProjectionManager.getMediaProjection(resultCode, data) ?: return
+		mediaProjection = projection
 
 		// Mandatory callback registration for Android 14+ (API 34) stability
-		mediaProjection?.registerCallback(object : MediaProjection.Callback() {
+		// Must be called BEFORE creating virtual display in engine.start()
+		projection.registerCallback(object : MediaProjection.Callback() {
 			override fun onStop() {
 				super.onStop()
 				mediaProjection = null
 				stopForegroundService()
 			}
 		}, null)
+
+		// Start our long-lived engine once
+		captureEngine.start(projection)
+		
+		// Show our floating drag-and-drop trigger
+		badgeManager.showBadge { handleCaptureTrigger() }
 	}
 
 	private fun startForegroundWithNotification() {
@@ -91,20 +103,12 @@ class ScreenCaptureService : Service() {
 		} else {
 			startForeground(NOTIFICATION_ID, notification)
 		}
+		
+		// Notify MainActivity that it's safe to finish
+		sendBroadcast(Intent(ACTION_SERVICE_STARTED))
 	}
 
 	private fun buildServiceNotification(): Notification {
-		// PendingIntent for the "Capture" action button
-		val captureIntent = Intent(this, ScreenCaptureService::class.java).apply {
-			action = ACTION_TRIGGER_CAPTURE
-		}
-		val capturePendingIntent = PendingIntent.getService(
-			this,
-			101,
-			captureIntent,
-			PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-		)
-
 		// PendingIntent for the "Stop" action button
 		val stopIntent = Intent(this, ScreenCaptureService::class.java).apply {
 			action = ACTION_STOP_SERVICE
@@ -118,11 +122,10 @@ class ScreenCaptureService : Service() {
 
 		return NotificationCompat.Builder(this, CHANNEL_ID)
 			.setContentTitle("Manga OCR Active")
-			.setContentText("Tap Capture when Japanese text is on screen")
+			.setContentText("Tap the floating badge to capture Japanese text")
 			.setSmallIcon(R.drawable.ic_scan)
 			.setOngoing(true)
 			.setPriority(NotificationCompat.PRIORITY_LOW)
-			.addAction(R.drawable.ic_scan, "Capture", capturePendingIntent)
 			.addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent)
 			.build()
 	}
@@ -137,19 +140,35 @@ class ScreenCaptureService : Service() {
 
 		serviceScope.launch {
 			try {
-				val bitmap = captureEngine.captureFrame(projection)
+				// Hide the badge temporarily so it doesn't get captured in the screenshot!
+				badgeManager.setVisible(false)
+				kotlinx.coroutines.delay(50) 
+				
+				// Pull the latest frame from our permanent engine
+				val bitmap = captureEngine.captureFrame()
+				
 				if (bitmap != null) {
 					Log.d("TsuyuCapture", "Captured frame: ${bitmap.width}x${bitmap.height}")
-					Toast.makeText(this@ScreenCaptureService, "Screen captured (${bitmap.width}x${bitmap.height})", Toast.LENGTH_SHORT).show()
 					
-					// TODO: Milestone 3 & 4 - Launch Overlay and pass Bitmap for OCR cropping
+					overlayManager.showOverlay { rect ->
+						Log.d("TsuyuCrop", "Crop area: $rect")
+						Toast.makeText(this@ScreenCaptureService, "Crop selected: ${rect.width()}x${rect.height()}", Toast.LENGTH_SHORT).show()
+						
+						// Prepared for Milestone 4 (where we will slice the bitmap using the rect)
+						// val croppedBitmap = sliceBitmap(bitmap, rect)
+						
+						// Restore badge
+						badgeManager.setVisible(true)
+					}
 				} else {
 					Log.e("TsuyuCapture", "Capture returned null bitmap")
 					Toast.makeText(this@ScreenCaptureService, "Capture failed: Empty frame", Toast.LENGTH_SHORT).show()
+					badgeManager.setVisible(true)
 				}
 			} catch (e: Exception) {
 				Log.e("TsuyuCapture", "Error capturing screen", e)
 				Toast.makeText(this@ScreenCaptureService, "Capture error: ${e.message}", Toast.LENGTH_SHORT).show()
+				badgeManager.setVisible(true)
 			}
 		}
 	}
@@ -178,6 +197,9 @@ class ScreenCaptureService : Service() {
 	override fun onDestroy() {
 		super.onDestroy()
 		serviceJob.cancel()
+		overlayManager.hideOverlay()
+		badgeManager.hideBadge()
+		captureEngine.stop()
 		mediaProjection?.stop()
 		mediaProjection = null
 	}
@@ -189,5 +211,6 @@ class ScreenCaptureService : Service() {
 		const val NOTIFICATION_ID = 2001
 		const val ACTION_TRIGGER_CAPTURE = "ACTION_TRIGGER_CAPTURE"
 		const val ACTION_STOP_SERVICE = "ACTION_STOP_SERVICE"
+		const val ACTION_SERVICE_STARTED = "com.example.tsuyu.ACTION_SERVICE_STARTED"
 	}
 }

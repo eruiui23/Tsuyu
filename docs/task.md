@@ -14,9 +14,9 @@
 - [x] Task 2.4: Ensure immediate release of `VirtualDisplay` and `ImageReader` after one frame.
 
 ## Milestone 3: Transparent Crop Overlay
-- [ ] Task 3.1: Create custom view `CropOverlayView.kt` with touch handling (`ACTION_DOWN`, `ACTION_MOVE`, `ACTION_UP`) for drawing a rectangle.
-- [ ] Task 3.2: Create `OverlayManager.kt` using `WindowManager` to attach/detach the view with `FLAG_NOT_FOCUSABLE`.
-- [ ] Task 3.3: Implement callback to pass crop coordinates `(left, top, right, bottom)` back to the service and remove the overlay.
+- [x] Task 3.1: Create custom view `CropOverlayView.kt` with touch handling (`ACTION_DOWN`, `ACTION_MOVE`, `ACTION_UP`) for drawing a rectangle.
+- [x] Task 3.2: Create `OverlayManager.kt` using `WindowManager` to attach/detach the view with `FLAG_NOT_FOCUSABLE`.
+- [x] Task 3.3: Implement callback to pass crop coordinates `(left, top, right, bottom)` back to the service and remove the overlay.
 
 ## Milestone 4: OCR Extraction Pipeline
 - [ ] Task 4.1: Implement `BitmapSlicer.kt` to crop the region on background thread (`Dispatchers.Default`).

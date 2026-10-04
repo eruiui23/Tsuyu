@@ -3,8 +3,10 @@ package com.example.tsuyu
 
 import android.Manifest
 import android.app.Activity
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
@@ -19,6 +21,14 @@ import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 	private lateinit var mediaProjectionManager: MediaProjectionManager
+	
+	private val serviceStartedReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context?, intent: Intent?) {
+			if (intent?.action == ScreenCaptureService.ACTION_SERVICE_STARTED) {
+				finish()
+			}
+		}
+	}
 	private val notificationPermissionLauncher = registerForActivityResult(
 		ActivityResultContracts.RequestPermission()
 	) { isGranted ->
@@ -56,11 +66,27 @@ class MainActivity : AppCompatActivity() {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_main)
 
+		val filter = IntentFilter(ScreenCaptureService.ACTION_SERVICE_STARTED)
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			registerReceiver(serviceStartedReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+		} else {
+			registerReceiver(serviceStartedReceiver, filter)
+		}
+
 		mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
 
 		val btnStart = findViewById<Button>(R.id.btnStartService)
 		btnStart.setOnClickListener {
 			initiatePermissionChain()
+		}
+	}
+
+	override fun onDestroy() {
+		super.onDestroy()
+		try {
+			unregisterReceiver(serviceStartedReceiver)
+		} catch (_: Exception) {
+			// Ignored
 		}
 	}
 
@@ -111,7 +137,7 @@ class MainActivity : AppCompatActivity() {
 
 		ContextCompat.startForegroundService(this, serviceIntent)
 		Toast.makeText(this, "OCR Service Started! Check your notifications.", Toast.LENGTH_SHORT).show()
-		finish() // Close the activity so the user is immediately back to their manga/game
+		// We do not call finish() here. We wait for the broadcast from the service.
 	}
 
 	companion object {
