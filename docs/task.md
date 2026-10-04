@@ -5,7 +5,7 @@
 - [x] Configure dependencies (`mlkit-text-recognition-japanese`, `kotlinx-coroutines-android`).
 - [x] Declare permissions & metadata in `AndroidManifest.xml`.
 - [x] Implement permission chain in `MainActivity.kt`.
-- [ ] **[WIP]** Implement and stabilize `ScreenCaptureService.kt` (Ensure notification appears and no `SecurityException` crashes occur on Android 14+).
+- [x] Implement and stabilize `ScreenCaptureService.kt` (Ensure notification appears and no `SecurityException` crashes occur on Android 14+).
 
 ## Milestone 2: Frame Capturing (Single-Shot)
 - [ ] Task 2.1: Create `ScreenCaptureEngine.kt` to encapsulate `VirtualDisplay` and `ImageReader`.

@@ -44,8 +44,8 @@ class ScreenCaptureService : Service() {
 				val resultData = intent.getParcelableExtra<Intent>(MainActivity.EXTRA_RESULT_DATA)
 
 				if (resultCode != 0 && resultData != null) {
-					initMediaProjection(resultCode, resultData)
 					startForegroundWithNotification()
+					initMediaProjection(resultCode, resultData)
 				} else if (mediaProjection == null) {
 					stopSelf()
 				}
