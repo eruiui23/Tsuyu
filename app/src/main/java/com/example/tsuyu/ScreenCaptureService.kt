@@ -31,6 +31,7 @@ class ScreenCaptureService : Service() {
 	private lateinit var captureEngine: ScreenCaptureEngine
 	private lateinit var overlayManager: OverlayManager
 	private lateinit var badgeManager: FloatingBadgeManager
+	private lateinit var ocrEngine: JapaneseOcrEngine
 
 	override fun onCreate() {
 		super.onCreate()
@@ -38,6 +39,7 @@ class ScreenCaptureService : Service() {
 		captureEngine = ScreenCaptureEngine(this)
 		overlayManager = OverlayManager(this)
 		badgeManager = FloatingBadgeManager(this)
+		ocrEngine = JapaneseOcrEngine()
 		createNotificationChannel()
 	}
 
@@ -152,13 +154,38 @@ class ScreenCaptureService : Service() {
 					
 					overlayManager.showOverlay { rect ->
 						Log.d("TsuyuCrop", "Crop area: $rect")
-						Toast.makeText(this@ScreenCaptureService, "Crop selected: ${rect.width()}x${rect.height()}", Toast.LENGTH_SHORT).show()
 						
-						// Prepared for Milestone 4 (where we will slice the bitmap using the rect)
-						// val croppedBitmap = sliceBitmap(bitmap, rect)
-						
-						// Restore badge
-						badgeManager.setVisible(true)
+						// Fire up the background OCR processing pipeline
+						serviceScope.launch {
+							try {
+								// 1. Slice the full frame
+								val croppedBitmap = BitmapSlicer.crop(bitmap, rect)
+								
+								// 2. We no longer need the massive full-screen buffer
+								bitmap.recycle()
+								
+								if (croppedBitmap != null) {
+									// 3. Extract text
+									val extractedText = ocrEngine.extractText(croppedBitmap)
+									
+									// 4. We no longer need the cropped buffer
+									croppedBitmap.recycle()
+									
+									// 5. Present result
+									Log.d("TsuyuOCR", "Extracted: $extractedText")
+									Toast.makeText(this@ScreenCaptureService, "OCR: $extractedText", Toast.LENGTH_LONG).show()
+									
+								} else {
+									Toast.makeText(this@ScreenCaptureService, "Crop failed", Toast.LENGTH_SHORT).show()
+								}
+							} catch (e: Exception) {
+								Log.e("TsuyuOCR", "OCR Pipeline failed", e)
+								Toast.makeText(this@ScreenCaptureService, "OCR Error: ${e.message}", Toast.LENGTH_SHORT).show()
+							} finally {
+								// Always ensure the badge comes back
+								badgeManager.setVisible(true)
+							}
+						}
 					}
 				} else {
 					Log.e("TsuyuCapture", "Capture returned null bitmap")

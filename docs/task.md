@@ -19,9 +19,9 @@
 - [x] Task 3.3: Implement callback to pass crop coordinates `(left, top, right, bottom)` back to the service and remove the overlay.
 
 ## Milestone 4: OCR Extraction Pipeline
-- [ ] Task 4.1: Implement `BitmapSlicer.kt` to crop the region on background thread (`Dispatchers.Default`).
-- [ ] Task 4.2: Implement `JapaneseOcrEngine.kt` using ML Kit `TextRecognition.getClient(...)`.
-- [ ] Task 4.3: Add text normalization (strip newlines, trim whitespace).
+- [x] Task 4.1: Implement `BitmapSlicer.kt` to crop the region on background thread (`Dispatchers.Default`).
+- [x] Task 4.2: Implement `JapaneseOcrEngine.kt` using ML Kit `TextRecognition.getClient(...)`.
+- [x] Task 4.3: Add text normalization (strip newlines, trim whitespace).
 
 ## Milestone 5: Decoupled Dispatch & Handoff
 - [ ] Task 5.1: Implement `ClipboardHelper.kt` to push the normalized string to `ClipData` and show a `Toast`.
