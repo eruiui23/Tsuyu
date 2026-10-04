@@ -5,13 +5,13 @@
 - [x] Configure dependencies (`mlkit-text-recognition-japanese`, `kotlinx-coroutines-android`).
 - [x] Declare permissions & metadata in `AndroidManifest.xml`.
 - [x] Implement permission chain in `MainActivity.kt`.
-- [x] Implement and stabilize `ScreenCaptureService.kt` (Ensure notification appears and no `SecurityException` crashes occur on Android 14+).
+- [ ] **[WIP]** Implement and stabilize `ScreenCaptureService.kt` (Ensure notification appears and no `SecurityException` crashes occur on Android 14+).
 
 ## Milestone 2: Frame Capturing (Single-Shot)
-- [ ] Task 2.1: Create `ScreenCaptureEngine.kt` to encapsulate `VirtualDisplay` and `ImageReader`.
-- [ ] Task 2.2: Implement plane buffer to `Bitmap` conversion with row stride/padding math.
-- [ ] Task 2.3: Wire capture trigger from `ScreenCaptureService` to return a raw full-screen `Bitmap`.
-- [ ] Task 2.4: Ensure immediate release of `VirtualDisplay` and `ImageReader` after one frame.
+- [x] Task 2.1: Create `ScreenCaptureEngine.kt` to encapsulate `VirtualDisplay` and `ImageReader`.
+- [x] Task 2.2: Implement plane buffer to `Bitmap` conversion with row stride/padding math.
+- [x] Task 2.3: Wire capture trigger from `ScreenCaptureService` to return a raw full-screen `Bitmap`.
+- [x] Task 2.4: Ensure immediate release of `VirtualDisplay` and `ImageReader` after one frame.
 
 ## Milestone 3: Transparent Crop Overlay
 - [ ] Task 3.1: Create custom view `CropOverlayView.kt` with touch handling (`ACTION_DOWN`, `ACTION_MOVE`, `ACTION_UP`) for drawing a rectangle.

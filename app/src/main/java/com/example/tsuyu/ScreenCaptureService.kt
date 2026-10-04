@@ -12,17 +12,28 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class ScreenCaptureService : Service() {
 
 	private var mediaProjection: MediaProjection? = null
 	private lateinit var mediaProjectionManager: MediaProjectionManager
+	
+	private val serviceJob = SupervisorJob()
+	private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
+	private lateinit var captureEngine: ScreenCaptureEngine
 
 	override fun onCreate() {
 		super.onCreate()
 		mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+		captureEngine = ScreenCaptureEngine(this)
 		createNotificationChannel()
 	}
 
@@ -117,14 +128,30 @@ class ScreenCaptureService : Service() {
 	}
 
 	private fun handleCaptureTrigger() {
-		if (mediaProjection == null) {
+		val projection = mediaProjection
+		if (projection == null) {
 			Toast.makeText(this, "Capture session expired. Reopen app.", Toast.LENGTH_SHORT).show()
 			stopForegroundService()
 			return
 		}
 
-		Toast.makeText(this, "Capture triggered! Ready to snap frame.", Toast.LENGTH_SHORT).show()
-		// Next step: Call the ImageReader frame capturer and launch the crop overlay
+		serviceScope.launch {
+			try {
+				val bitmap = captureEngine.captureFrame(projection)
+				if (bitmap != null) {
+					Log.d("TsuyuCapture", "Captured frame: ${bitmap.width}x${bitmap.height}")
+					Toast.makeText(this@ScreenCaptureService, "Screen captured (${bitmap.width}x${bitmap.height})", Toast.LENGTH_SHORT).show()
+					
+					// TODO: Milestone 3 & 4 - Launch Overlay and pass Bitmap for OCR cropping
+				} else {
+					Log.e("TsuyuCapture", "Capture returned null bitmap")
+					Toast.makeText(this@ScreenCaptureService, "Capture failed: Empty frame", Toast.LENGTH_SHORT).show()
+				}
+			} catch (e: Exception) {
+				Log.e("TsuyuCapture", "Error capturing screen", e)
+				Toast.makeText(this@ScreenCaptureService, "Capture error: ${e.message}", Toast.LENGTH_SHORT).show()
+			}
+		}
 	}
 
 	private fun createNotificationChannel() {
@@ -150,6 +177,7 @@ class ScreenCaptureService : Service() {
 
 	override fun onDestroy() {
 		super.onDestroy()
+		serviceJob.cancel()
 		mediaProjection?.stop()
 		mediaProjection = null
 	}
