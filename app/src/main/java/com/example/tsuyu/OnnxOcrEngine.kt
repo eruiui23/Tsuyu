@@ -19,7 +19,7 @@ class OnnxOcrEngine(private val context: Context) : AutoCloseable {
     private val tokenizer: JapaneseTokenizer = JapaneseTokenizer(context)
 
     init {
-        val encoderBytes = context.assets.open("encoder_model.onnx").use { it.readBytes() }
+        val encoderBytes = context.assets.open("encoder_model_quantized.onnx").use { it.readBytes() }
         val decoderBytes = context.assets.open("decoder_model_quantized.onnx").use { it.readBytes() }
 
         val sessionOptions = OrtSession.SessionOptions().apply {

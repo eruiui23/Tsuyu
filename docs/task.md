@@ -21,10 +21,10 @@
 - [x] Task 3.5: Add text post-processing to strip special tokens (`[PAD]`, `[SEP]`, etc.) and trim extra whitespace.
 
 ## Milestone 4: Dispatch Pipeline & Preferences
-- [ ] Task 4.1: Implement `ClipboardHelper.kt` to push text to `ClipboardManager` and display a transient confirmation `Toast`.
-- [ ] Task 4.2: Implement `BrowserLauncher.kt` to launch Firefox with `https://jisho.org/search/<encoded_text>` (with fallback to default browser).
-- [ ] Task 4.3: Implement `DispatchCoordinator.kt` reading user preference (`pref_use_firefox`) from `SharedPreferences`.
-- [ ] Task 4.4: Add preference switch in `MainActivity.kt` and `activity_main.xml` to toggle the Firefox handoff.
+- [x] Task 4.1: Implement `ClipboardHelper.kt` to push text to `ClipboardManager` and display a transient confirmation `Toast`.
+- [x] Task 4.2: Implement `BrowserLauncher.kt` to launch Firefox with `https://jisho.org/search/<encoded_text>` (with fallback to default browser).
+- [x] Task 4.3: Implement `DispatchCoordinator.kt` reading user preference (`pref_use_firefox`) from `SharedPreferences`.
+- [x] Task 4.4: Add preference switch in `MainActivity.kt` and `activity_main.xml` to toggle the Firefox handoff.
 
 ## Milestone 5: Testing & Hardening
 - [ ] Task 5.1: Verify Gallery picker workflow on legacy Android devices (API 24–29, including Sony SOV35).

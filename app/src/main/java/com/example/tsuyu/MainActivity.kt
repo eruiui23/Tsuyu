@@ -3,6 +3,7 @@ package com.example.tsuyu
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -12,20 +13,55 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
+import androidx.lifecycle.lifecycleScope
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
-    // CanHub Cropper Result Handler
+    private var ocrEngine: OnnxOcrEngine? = null
+
+    // CanHub Cropper Result Handler & Full OCR Pipeline
     private val cropImageLauncher = registerForActivityResult(CropImageContract()) { result ->
         if (result.isSuccessful) {
-            val croppedImageUri = result.uriContent
+            val croppedImageUri = result.uriContent ?: return@registerForActivityResult
             Log.d("TsuyuCrop", "Crop successful: $croppedImageUri")
-            Toast.makeText(this, "Crop completed", Toast.LENGTH_SHORT).show()
-            // Kept ready for Milestone 3 (ONNX Inference)
+
+            // Full End-to-End Pipeline
+            lifecycleScope.launch {
+                try {
+                    // 1. Load cropped URI into a Bitmap on Dispatchers.IO
+                    val bitmap = withContext(Dispatchers.IO) {
+                        contentResolver.openInputStream(croppedImageUri)?.use { inputStream ->
+                            BitmapFactory.decodeStream(inputStream)
+                        }
+                    }
+
+                    if (bitmap != null) {
+                        // 2. Pass Bitmap to OnnxOcrEngine on Dispatchers.Default
+                        val extractedText = withContext(Dispatchers.Default) {
+                            val engine = ocrEngine ?: OnnxOcrEngine(this@MainActivity)
+                            engine.extractText(bitmap)
+                        }
+                        bitmap.recycle() // Recycle buffer immediately after inference
+
+                        Log.d("TsuyuOCR", "OCR Extracted Text: $extractedText")
+
+                        // 3. Dispatch text on Dispatchers.Main
+                        DispatchCoordinator.dispatch(this@MainActivity, extractedText)
+                    } else {
+                        Toast.makeText(this@MainActivity, "Failed to load cropped image", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Log.e("TsuyuOCR", "OCR Pipeline failed", e)
+                    Toast.makeText(this@MainActivity, "OCR Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
         } else {
             val exception = result.error
             Log.e("TsuyuCrop", "Crop failed", exception)
@@ -47,13 +83,16 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Initialize ONNX Engine
+        ocrEngine = OnnxOcrEngine(this)
+
         val btnPickImage = findViewById<Button>(R.id.btnPickImage)
         btnPickImage.setOnClickListener {
             // Launch the photo picker, allowing only images
             pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
 
-        // Retain Settings Toggle for Dispatch Coordinator
+        // Settings Toggle for Dispatch Coordinator
         val switchFirefox = findViewById<SwitchCompat>(R.id.switchFirefox)
         val prefs = getSharedPreferences(DispatchCoordinator.PREFS_NAME, Context.MODE_PRIVATE)
         switchFirefox.isChecked = prefs.getBoolean(DispatchCoordinator.PREF_USE_FIREFOX, false)
@@ -69,6 +108,12 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         handleIncomingIntent(intent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        ocrEngine?.close()
+        ocrEngine = null
     }
 
     private fun handleIncomingIntent(intent: Intent?) {
