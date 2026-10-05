@@ -30,6 +30,11 @@ android {
 		sourceCompatibility = JavaVersion.VERSION_11
 		targetCompatibility = JavaVersion.VERSION_11
 	}
+	packaging {
+		jniLibs {
+			useLegacyPackaging = false
+		}
+	}
 }
 
 dependencies {
@@ -39,7 +44,7 @@ dependencies {
 	implementation(libs.androidx.core.ktx)
 	implementation(libs.material)
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-	implementation("com.microsoft.onnxruntime:onnxruntime-android:1.17.1")
+	implementation("com.microsoft.onnxruntime:onnxruntime-android:1.30.0")
 	implementation("com.vanniktech:android-image-cropper:4.5.0")
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.espresso.core)
