@@ -17,6 +17,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
@@ -67,17 +68,27 @@ class MainActivity : AppCompatActivity() {
 		setContentView(R.layout.activity_main)
 
 		val filter = IntentFilter(ScreenCaptureService.ACTION_SERVICE_STARTED)
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			registerReceiver(serviceStartedReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-		} else {
-			registerReceiver(serviceStartedReceiver, filter)
-		}
+		ContextCompat.registerReceiver(
+			this,
+			serviceStartedReceiver,
+			filter,
+			ContextCompat.RECEIVER_NOT_EXPORTED
+		)
 
 		mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
 
 		val btnStart = findViewById<Button>(R.id.btnStartService)
 		btnStart.setOnClickListener {
 			initiatePermissionChain()
+		}
+
+		// Setup Settings Toggle
+		val switchFirefox = findViewById<SwitchCompat>(R.id.switchFirefox)
+		val prefs = getSharedPreferences(DispatchCoordinator.PREFS_NAME, Context.MODE_PRIVATE)
+		switchFirefox.isChecked = prefs.getBoolean(DispatchCoordinator.PREF_USE_FIREFOX, false)
+
+		switchFirefox.setOnCheckedChangeListener { _, isChecked ->
+			prefs.edit().putBoolean(DispatchCoordinator.PREF_USE_FIREFOX, isChecked).apply()
 		}
 	}
 

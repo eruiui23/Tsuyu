@@ -173,7 +173,9 @@ class ScreenCaptureService : Service() {
 									
 									// 5. Present result
 									Log.d("TsuyuOCR", "Extracted: $extractedText")
-									Toast.makeText(this@ScreenCaptureService, "OCR: $extractedText", Toast.LENGTH_LONG).show()
+									
+									// 6. Dispatch pipeline (Clipboard + Optional Firefox)
+									DispatchCoordinator.dispatch(this@ScreenCaptureService, extractedText)
 									
 								} else {
 									Toast.makeText(this@ScreenCaptureService, "Crop failed", Toast.LENGTH_SHORT).show()

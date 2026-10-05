@@ -24,13 +24,19 @@
 
 
     <TextView
-
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"
         android:gravity="center"
         android:text="Grant necessary permissions to enable background screen capture and overlay." />
 
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchFirefox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:text="Auto-open in Firefox (Yomitan)   "
+        android:textSize="16sp" />
 
     <Button
         android:id="@+id/btnStartService"

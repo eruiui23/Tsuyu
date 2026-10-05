@@ -24,10 +24,10 @@
 - [x] Task 4.3: Add text normalization (strip newlines, trim whitespace).
 
 ## Milestone 5: Decoupled Dispatch & Handoff
-- [ ] Task 5.1: Implement `ClipboardHelper.kt` to push the normalized string to `ClipData` and show a `Toast`.
-- [ ] Task 5.2: Implement `BrowserLauncher.kt` to handle the Firefox/Yomitan Intent routing (`https://jisho.org/search/...`).
-- [ ] Task 5.3: Create `DispatchCoordinator.kt` to manage the flow based on user preference.
-- [ ] Task 5.4: Implement a simple `SharedPreferences` toggle (e.g., in `MainActivity`) to switch between "Clipboard Only" and "Clipboard + Firefox".
+- [x] Task 5.1: Implement `ClipboardHelper.kt` to push the normalized string to `ClipData` and show a `Toast`.
+- [x] Task 5.2: Implement `BrowserLauncher.kt` to handle the Firefox/Yomitan Intent routing (`https://jisho.org/search/...`).
+- [x] Task 5.3: Create `DispatchCoordinator.kt` to manage the flow based on user preference.
+- [x] Task 5.4: Implement a simple `SharedPreferences` toggle (e.g., in `MainActivity`) to switch between "Clipboard Only" and "Clipboard + Firefox".
 
 ## Milestone 6: Hardening & Testing
 - [ ] Test on Android 7.0–8.1 (verify legacy notification and overlay handling).
