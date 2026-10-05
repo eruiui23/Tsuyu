@@ -31,6 +31,8 @@ class OnnxOcrEngine(private val context: Context) : AutoCloseable {
     }
 
     suspend fun extractText(bitmap: Bitmap): String = withContext(Dispatchers.Default) {
+        val startTotal = System.currentTimeMillis()
+
         val encoderInputName = encoderSession.inputNames.iterator().next()
         val decoderInputNames = decoderSession.inputNames.toList()
 
@@ -40,16 +42,16 @@ class OnnxOcrEngine(private val context: Context) : AutoCloseable {
             ?: decoderInputNames.elementAtOrElse(1) { "encoder_hidden_states" }
 
         // 1. Preprocess bitmap to 1x3x224x224 normalized float tensor
+        val startPrep = System.currentTimeMillis()
         val imageTensor = prepareImageTensor(bitmap)
+        val prepTime = System.currentTimeMillis() - startPrep
 
         val generatedTokens = mutableListOf<Long>(JapaneseTokenizer.CLS_TOKEN_ID)
 
+        val startInference = System.currentTimeMillis()
         try {
             // 2. Encoder pass
-            val encoderResult = encoderSession.run(mapOf(encoderInputName to imageTensor))
-            imageTensor.close()
-
-            encoderResult.use { encResult ->
+            encoderSession.run(mapOf(encoderInputName to imageTensor)).use { encResult ->
                 val encoderHiddenStateValue = encResult.get(0)
                 val encoderHiddenStateTensor = encoderHiddenStateValue as OnnxTensor
 
@@ -64,38 +66,39 @@ class OnnxOcrEngine(private val context: Context) : AutoCloseable {
 
                     val inputIdsTensor = OnnxTensor.createTensor(env, inputIdsBuffer, longArrayOf(1, seqLen))
 
-                    val decoderInputs = mapOf(
-                        inputIdsName to inputIdsTensor,
-                        encoderHiddenStateName to encoderHiddenStateTensor
-                    )
+                    try {
+                        val decoderInputs = mapOf(
+                            inputIdsName to inputIdsTensor,
+                            encoderHiddenStateName to encoderHiddenStateTensor
+                        )
 
-                    val decoderResult = decoderSession.run(decoderInputs)
-                    inputIdsTensor.close()
+                        decoderSession.run(decoderInputs).use { decResult ->
+                            val logitsTensor = decResult.get(0) as OnnxTensor
+                            val logitsInfo = logitsTensor.info as TensorInfo
+                            val vocabSize = logitsInfo.shape[2].toInt()
+                            val lastStepOffset = (seqLen.toInt() - 1) * vocabSize
 
-                    decoderResult.use { decResult ->
-                        val logitsTensor = decResult.get(0) as OnnxTensor
-                        val logitsInfo = logitsTensor.info as TensorInfo
-                        val vocabSize = logitsInfo.shape[2].toInt()
-                        val lastStepOffset = (seqLen.toInt() - 1) * vocabSize
+                            val floatBuffer = logitsTensor.floatBuffer
 
-                        val floatBuffer = logitsTensor.floatBuffer
+                            var maxLogit = -Float.MAX_VALUE
+                            var maxTokenId = JapaneseTokenizer.UNK_TOKEN_ID
 
-                        var maxLogit = -Float.MAX_VALUE
-                        var maxTokenId = JapaneseTokenizer.UNK_TOKEN_ID
-
-                        for (v in 0 until vocabSize) {
-                            val logit = floatBuffer.get(lastStepOffset + v)
-                            if (logit > maxLogit) {
-                                maxLogit = logit
-                                maxTokenId = v.toLong()
+                            for (v in 0 until vocabSize) {
+                                val logit = floatBuffer.get(lastStepOffset + v)
+                                if (logit > maxLogit) {
+                                    maxLogit = logit
+                                    maxTokenId = v.toLong()
+                                }
                             }
-                        }
 
-                        if (maxTokenId == JapaneseTokenizer.SEP_TOKEN_ID) {
-                            return@use
-                        }
+                            if (maxTokenId == JapaneseTokenizer.SEP_TOKEN_ID) {
+                                break // Exit autoregressive loop
+                            }
 
-                        generatedTokens.add(maxTokenId)
+                            generatedTokens.add(maxTokenId)
+                        }
+                    } finally {
+                        inputIdsTensor.close()
                     }
 
                     if (generatedTokens.last() == JapaneseTokenizer.SEP_TOKEN_ID) {
@@ -105,7 +108,14 @@ class OnnxOcrEngine(private val context: Context) : AutoCloseable {
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            throw e
+        } finally {
+            imageTensor.close()
         }
+
+        val inferenceTime = System.currentTimeMillis() - startInference
+        val totalTime = System.currentTimeMillis() - startTotal
+        android.util.Log.d("TsuyuBenchmark", "Preprocessing: ${prepTime}ms | Inference: ${inferenceTime}ms | Total: ${totalTime}ms")
 
         // 4. Decode generated token IDs into Japanese text
         tokenizer.decode(generatedTokens)
@@ -117,6 +127,10 @@ class OnnxOcrEngine(private val context: Context) : AutoCloseable {
         resized.getPixels(pixels, 0, 224, 0, 0, 224, 224)
         if (resized != bitmap) {
             resized.recycle()
+        }
+        // Explicitly recycle the source bitmap as soon as pixels are extracted
+        if (!bitmap.isRecycled) {
+            bitmap.recycle()
         }
 
         val floatBuffer = FloatBuffer.allocate(1 * 3 * 224 * 224)

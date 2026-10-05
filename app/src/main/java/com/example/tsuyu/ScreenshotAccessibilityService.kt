@@ -71,6 +71,9 @@ class ScreenshotAccessibilityService : AccessibilityService() {
                                 softwareBitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
                             }
                             onResult(softwareBitmap)
+                            if (!softwareBitmap.isRecycled) {
+                                softwareBitmap.recycle()
+                            }
                         } else {
                             onResult(null)
                         }

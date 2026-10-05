@@ -1,5 +1,6 @@
 package com.example.tsuyu
 
+import ai.onnxruntime.OrtException
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -9,6 +10,8 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
+import java.io.File
+import kotlin.system.measureTimeMillis
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -43,29 +46,71 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     if (bitmap != null) {
-                        // 2. Pass Bitmap to OnnxOcrEngine on Dispatchers.Default
-                        val extractedText = withContext(Dispatchers.Default) {
-                            val engine = ocrEngine ?: OnnxOcrEngine(this@MainActivity)
-                            engine.extractText(bitmap)
+                        if (bitmap.width == 0 || bitmap.height == 0) {
+                            Toast.makeText(this@MainActivity, "Invalid crop area", Toast.LENGTH_SHORT).show()
+                            bitmap.recycle()
+                            return@launch
                         }
-                        bitmap.recycle() // Recycle buffer immediately after inference
+
+                        var extractedText = ""
+                        val inferenceTime = measureTimeMillis {
+                            // 2. Pass Bitmap to OnnxOcrEngine on Dispatchers.Default
+                            extractedText = withContext(Dispatchers.Default) {
+                                val engine = ocrEngine ?: OnnxOcrEngine(this@MainActivity).also { ocrEngine = it }
+                                engine.extractText(bitmap)
+                            }
+                        }
+                        if (!bitmap.isRecycled) {
+                            bitmap.recycle() // Recycle buffer immediately after inference
+                        }
 
                         Log.d("TsuyuOCR", "OCR Extracted Text: $extractedText")
 
-                        // 3. Dispatch text on Dispatchers.Main
-                        DispatchCoordinator.dispatch(this@MainActivity, extractedText)
+                        if (extractedText.isBlank()) {
+                            Toast.makeText(this@MainActivity, "No text detected", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this@MainActivity, "Recognized text (${inferenceTime}ms)", Toast.LENGTH_SHORT).show()
+                            // 3. Dispatch text on Dispatchers.Main
+                            DispatchCoordinator.dispatch(this@MainActivity, extractedText)
+                        }
                     } else {
                         Toast.makeText(this@MainActivity, "Failed to load cropped image", Toast.LENGTH_SHORT).show()
                     }
+                } catch (e: OrtException) {
+                    Log.e("TsuyuOCR", "ONNX runtime exception", e)
+                    Toast.makeText(this@MainActivity, "OCR processing failed", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
                     Log.e("TsuyuOCR", "OCR Pipeline failed", e)
-                    Toast.makeText(this@MainActivity, "OCR Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "OCR processing failed", Toast.LENGTH_SHORT).show()
+                } finally {
+                    cleanupCache(croppedImageUri)
                 }
             }
         } else {
+            cleanupCache(null) // Clean up if user canceled
             val exception = result.error
-            Log.e("TsuyuCrop", "Crop failed", exception)
-            Toast.makeText(this, "Crop failed: ${exception?.message}", Toast.LENGTH_SHORT).show()
+            if (exception != null) {
+                Log.e("TsuyuCrop", "Crop failed", exception)
+                Toast.makeText(this, "Crop failed: ${exception.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun cleanupCache(croppedImageUri: Uri?) {
+        // Clean up previous temporary screenshot file
+        val tempScreenshot = File(cacheDir, "temp_screenshot.png")
+        if (tempScreenshot.exists()) {
+            tempScreenshot.delete()
+        }
+        
+        // Clean up cropped image from cache if it's a file
+        if (croppedImageUri != null && croppedImageUri.scheme == "file") {
+            croppedImageUri.path?.let { path ->
+                val cropFile = File(path)
+                if (cropFile.exists()) {
+                    cropFile.delete()
+                }
+            }
         }
     }
 

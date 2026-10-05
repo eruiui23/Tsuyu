@@ -27,6 +27,6 @@
 - [x] Task 4.4: Add preference switch in `MainActivity.kt` and `activity_main.xml` to toggle the Firefox handoff.
 
 ## Milestone 5: Testing & Hardening
-- [ ] Task 5.1: Verify Gallery picker workflow on legacy Android devices (API 24–29, including Sony SOV35).
-- [ ] Task 5.2: Verify Accessibility screenshot trigger and floating badge on modern Android devices (API 30+).
-- [ ] Task 5.3: Benchmark on-device ONNX inference latency and verify bitmap recycling to avoid memory leaks.
+- [x] Task 5.1: Verify Gallery picker workflow on legacy Android devices (API 24–29, including Sony SOV35).
+- [x] Task 5.2: Verify Accessibility screenshot trigger and floating badge on modern Android devices (API 30+).
+- [x] Task 5.3: Benchmark on-device ONNX inference latency and verify bitmap recycling to avoid memory leaks.
