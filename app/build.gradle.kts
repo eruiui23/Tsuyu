@@ -38,7 +38,6 @@ dependencies {
 	implementation(libs.androidx.constraintlayout)
 	implementation(libs.androidx.core.ktx)
 	implementation(libs.material)
-	implementation("com.google.android.gms:play-services-mlkit-text-recognition-japanese:16.0.1")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.espresso.core)
