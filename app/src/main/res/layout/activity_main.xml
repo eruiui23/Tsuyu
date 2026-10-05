@@ -28,7 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"
         android:gravity="center"
-        android:text="Grant necessary permissions to enable background screen capture and overlay." />
+        android:text="Select an image containing Japanese text to process." />
 
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/switchFirefox"
@@ -39,9 +39,9 @@
         android:textSize="16sp" />
 
     <Button
-        android:id="@+id/btnStartService"
+        android:id="@+id/btnPickImage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start OCR Service" />
+        android:text="Pick Image from Gallery" />
 
 </LinearLayout>

@@ -24,7 +24,7 @@ class FloatingBadgeManager(private val context: Context) {
         val size = (56 * context.resources.displayMetrics.density).toInt()
 
         val imageView = ImageView(context).apply {
-            setImageResource(R.drawable.ic_scan)
+            setImageResource(android.R.drawable.ic_menu_camera)
             setBackgroundColor(Color.parseColor("#80000000")) // Semi-transparent dark bg
             setPadding(24, 24, 24, 24)
             scaleType = ImageView.ScaleType.FIT_CENTER
@@ -83,10 +83,6 @@ class FloatingBadgeManager(private val context: Context) {
 
         badgeView = imageView
         windowManager.addView(badgeView, params)
-    }
-
-    fun setVisible(visible: Boolean) {
-        badgeView?.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
     fun hideBadge() {

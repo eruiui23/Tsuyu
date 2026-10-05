@@ -1,11 +1,11 @@
 # Implementation Tasks & Checklist: Tsuyu
 
 ## Milestone 1: Project Setup & Input Sourcing
-- [ ] Task 1.1: Configure project dependencies in `build.gradle.kts` (`onnxruntime-android`, `kotlinx-coroutines-android`, `androidx.activity-ktx`).
-- [ ] Task 1.2: Implement Method B (Universal / API 24+) Gallery Picker in `MainActivity.kt` using `ActivityResultContracts.PickVisualMedia` to obtain an image `Uri`.
-- [ ] Task 1.3: Declare and implement Method A (API 30+) `ScreenshotAccessibilityService.kt` with `android:accessibilityFeedbackType="feedbackGeneric"` and `android:canTakeScreenshot="true"` in accessibility service XML.
-- [ ] Task 1.4: Implement `FloatingBadgeManager.kt` using `WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY` (active on API 30+ when accessibility service is enabled).
-- [ ] Task 1.5: Wire badge click to invoke `AccessibilityService.takeScreenshot()`, save the result to a temporary cache file, and prepare image handoff.
+- [x] Task 1.1: Configure project dependencies in `build.gradle.kts` (`onnxruntime-android`, `kotlinx-coroutines-android`, `androidx.activity-ktx`).
+- [x] Task 1.2: Implement Method B (Universal / API 24+) Gallery Picker in `MainActivity.kt` using `ActivityResultContracts.PickVisualMedia` to obtain an image `Uri`.
+- [x] Task 1.3: Declare and implement Method A (API 30+) `ScreenshotAccessibilityService.kt` with `android:accessibilityFeedbackType="feedbackGeneric"` and `android:canTakeScreenshot="true"` in accessibility service XML.
+- [x] Task 1.4: Implement `FloatingBadgeManager.kt` using `WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY` (active on API 30+ when accessibility service is enabled).
+- [x] Task 1.5: Wire badge click to invoke `AccessibilityService.takeScreenshot()`, save the result to a temporary cache file, and prepare image handoff.
 
 ## Milestone 2: Cropping Interface (`CropActivity`)
 - [ ] Task 2.1: Create `CropActivity.kt` and declare it in `AndroidManifest.xml`.
