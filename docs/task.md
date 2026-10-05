@@ -1,35 +1,32 @@
 # Implementation Tasks & Checklist: Tsuyu
 
-## Milestone 1: Foundation & Setup (Currently Debugging)
-- [x] Create project with Minimum SDK 24, Kotlin DSL.
-- [x] Configure dependencies (`mlkit-text-recognition-japanese`, `kotlinx-coroutines-android`).
-- [x] Declare permissions & metadata in `AndroidManifest.xml`.
-- [x] Implement permission chain in `MainActivity.kt`.
-- [ ] **[WIP]** Implement and stabilize `ScreenCaptureService.kt` (Ensure notification appears and no `SecurityException` crashes occur on Android 14+).
+## Milestone 1: Project Setup & Input Sourcing
+- [ ] Task 1.1: Configure project dependencies in `build.gradle.kts` (`onnxruntime-android`, `kotlinx-coroutines-android`, `androidx.activity-ktx`).
+- [ ] Task 1.2: Implement Method B (Universal / API 24+) Gallery Picker in `MainActivity.kt` using `ActivityResultContracts.PickVisualMedia` to obtain an image `Uri`.
+- [ ] Task 1.3: Declare and implement Method A (API 30+) `ScreenshotAccessibilityService.kt` with `android:accessibilityFeedbackType="feedbackGeneric"` and `android:canTakeScreenshot="true"` in accessibility service XML.
+- [ ] Task 1.4: Implement `FloatingBadgeManager.kt` using `WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY` (active on API 30+ when accessibility service is enabled).
+- [ ] Task 1.5: Wire badge click to invoke `AccessibilityService.takeScreenshot()`, save the result to a temporary cache file, and prepare image handoff.
 
-## Milestone 2: Frame Capturing (Single-Shot)
-- [x] Task 2.1: Create `ScreenCaptureEngine.kt` to encapsulate `VirtualDisplay` and `ImageReader`.
-- [x] Task 2.2: Implement plane buffer to `Bitmap` conversion with row stride/padding math.
-- [x] Task 2.3: Wire capture trigger from `ScreenCaptureService` to return a raw full-screen `Bitmap`.
-- [x] Task 2.4: Ensure immediate release of `VirtualDisplay` and `ImageReader` after one frame.
+## Milestone 2: Cropping Interface (`CropActivity`)
+- [ ] Task 2.1: Create `CropActivity.kt` and declare it in `AndroidManifest.xml`.
+- [ ] Task 2.2: Implement image loading from `Uri` or temporary cache file into the cropping canvas.
+- [ ] Task 2.3: Build or integrate cropping view allowing touch drag bounding box selection.
+- [ ] Task 2.4: Implement sub-bitmap slicing with boundary checks and return the cropped `Bitmap`.
 
-## Milestone 3: Transparent Crop Overlay
-- [x] Task 3.1: Create custom view `CropOverlayView.kt` with touch handling (`ACTION_DOWN`, `ACTION_MOVE`, `ACTION_UP`) for drawing a rectangle.
-- [x] Task 3.2: Create `OverlayManager.kt` using `WindowManager` to attach/detach the view with `FLAG_NOT_FOCUSABLE`.
-- [x] Task 3.3: Implement callback to pass crop coordinates `(left, top, right, bottom)` back to the service and remove the overlay.
+## Milestone 3: ONNX Inference Engine (`manga-ocr`)
+- [ ] Task 3.1: Export/quantize `manga-ocr` into `.onnx` format and bundle model + tokenizer files into `src/main/assets/`.
+- [ ] Task 3.2: Implement tokenizer vocabulary parser in Kotlin to map token IDs back to Japanese characters.
+- [ ] Task 3.3: Implement image tensor preprocessing in `OnnxOcrEngine.kt` (resizing, RGB normalization, CHW float tensor conversion).
+- [ ] Task 3.4: Implement `OrtSession` inference call on `Dispatchers.Default` and run autoregressive / greedy token decoding.
+- [ ] Task 3.5: Add text post-processing to strip special tokens (`[PAD]`, `[SEP]`, etc.) and trim extra whitespace.
 
-## Milestone 4: OCR Extraction Pipeline
-- [x] Task 4.1: Implement `BitmapSlicer.kt` to crop the region on background thread (`Dispatchers.Default`).
-- [x] Task 4.2: Implement `JapaneseOcrEngine.kt` using ML Kit `TextRecognition.getClient(...)`.
-- [x] Task 4.3: Add text normalization (strip newlines, trim whitespace).
+## Milestone 4: Dispatch Pipeline & Preferences
+- [ ] Task 4.1: Implement `ClipboardHelper.kt` to push text to `ClipboardManager` and display a transient confirmation `Toast`.
+- [ ] Task 4.2: Implement `BrowserLauncher.kt` to launch Firefox with `https://jisho.org/search/<encoded_text>` (with fallback to default browser).
+- [ ] Task 4.3: Implement `DispatchCoordinator.kt` reading user preference (`pref_use_firefox`) from `SharedPreferences`.
+- [ ] Task 4.4: Add preference switch in `MainActivity.kt` and `activity_main.xml` to toggle the Firefox handoff.
 
-## Milestone 5: Decoupled Dispatch & Handoff
-- [x] Task 5.1: Implement `ClipboardHelper.kt` to push the normalized string to `ClipData` and show a `Toast`.
-- [x] Task 5.2: Implement `BrowserLauncher.kt` to handle the Firefox/Yomitan Intent routing (`https://jisho.org/search/...`).
-- [x] Task 5.3: Create `DispatchCoordinator.kt` to manage the flow based on user preference.
-- [x] Task 5.4: Implement a simple `SharedPreferences` toggle (e.g., in `MainActivity`) to switch between "Clipboard Only" and "Clipboard + Firefox".
-
-## Milestone 6: Hardening & Testing
-- [ ] Test on Android 7.0–8.1 (verify legacy notification and overlay handling).
-- [ ] Test on Android 14+ (verify `MediaProjection` lifecycle callback and background stability).
-- [ ] Validate edge cases (zero-width crop box, user cancelling overlay, screen rotation during capture).
+## Milestone 5: Testing & Hardening
+- [ ] Task 5.1: Verify Gallery picker workflow on legacy Android devices (API 24–29, including Sony SOV35).
+- [ ] Task 5.2: Verify Accessibility screenshot trigger and floating badge on modern Android devices (API 30+).
+- [ ] Task 5.3: Benchmark on-device ONNX inference latency and verify bitmap recycling to avoid memory leaks.
