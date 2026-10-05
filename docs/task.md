@@ -8,10 +8,10 @@
 - [x] Task 1.5: Wire badge click to invoke `AccessibilityService.takeScreenshot()`, save the result to a temporary cache file, and prepare image handoff.
 
 ## Milestone 2: Cropping Interface (`CropActivity`)
-- [ ] Task 2.1: Create `CropActivity.kt` and declare it in `AndroidManifest.xml`.
-- [ ] Task 2.2: Implement image loading from `Uri` or temporary cache file into the cropping canvas.
-- [ ] Task 2.3: Build or integrate cropping view allowing touch drag bounding box selection.
-- [ ] Task 2.4: Implement sub-bitmap slicing with boundary checks and return the cropped `Bitmap`.
+- [x] Task 2.1: Implement CanHub `android-image-cropper` dependency.
+- [x] Task 2.2: Implement `CropImageContract` launcher in `MainActivity.kt` with free-form PNG options.
+- [x] Task 2.3: Route Accessibility screenshot capture to the cropper.
+- [x] Task 2.4: Handle the result URI and store it for OCR.
 
 ## Milestone 3: ONNX Inference Engine (`manga-ocr`)
 - [ ] Task 3.1: Export/quantize `manga-ocr` into `.onnx` format and bundle model + tokenizer files into `src/main/assets/`.

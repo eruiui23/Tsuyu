@@ -3,6 +3,7 @@ package com.example.tsuyu
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.view.Display
@@ -27,7 +28,15 @@ class ScreenshotAccessibilityService : AccessibilityService() {
                 captureScreen { bitmap ->
                     if (bitmap != null) {
                         Log.d("TsuyuCapture", "Screenshot saved to cache")
-                        // In Milestone 2: We will launch CropActivity here using the cache URI
+                        
+                        // Launch MainActivity which hosts the Cropper Contract
+                        val uri = Uri.fromFile(File(cacheDir, "temp_screenshot.png"))
+                        val intent = Intent(this@ScreenshotAccessibilityService, MainActivity::class.java).apply {
+                            putExtra(MainActivity.EXTRA_CROP_URI, uri.toString())
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        }
+                        startActivity(intent)
+                        
                     } else {
                         Log.e("TsuyuCapture", "Screenshot capture failed")
                     }
