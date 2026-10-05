@@ -14,11 +14,11 @@
 - [x] Task 2.4: Handle the result URI and store it for OCR.
 
 ## Milestone 3: ONNX Inference Engine (`manga-ocr`)
-- [ ] Task 3.1: Export/quantize `manga-ocr` into `.onnx` format and bundle model + tokenizer files into `src/main/assets/`.
-- [ ] Task 3.2: Implement tokenizer vocabulary parser in Kotlin to map token IDs back to Japanese characters.
-- [ ] Task 3.3: Implement image tensor preprocessing in `OnnxOcrEngine.kt` (resizing, RGB normalization, CHW float tensor conversion).
-- [ ] Task 3.4: Implement `OrtSession` inference call on `Dispatchers.Default` and run autoregressive / greedy token decoding.
-- [ ] Task 3.5: Add text post-processing to strip special tokens (`[PAD]`, `[SEP]`, etc.) and trim extra whitespace.
+- [x] Task 3.1: Export/quantize `manga-ocr` into `.onnx` format and bundle model + tokenizer files into `src/main/assets/`.
+- [x] Task 3.2: Implement tokenizer vocabulary parser in Kotlin to map token IDs back to Japanese characters.
+- [x] Task 3.3: Implement image tensor preprocessing in `OnnxOcrEngine.kt` (resizing, RGB normalization, CHW float tensor conversion).
+- [x] Task 3.4: Implement `OrtSession` inference call on `Dispatchers.Default` and run autoregressive / greedy token decoding.
+- [x] Task 3.5: Add text post-processing to strip special tokens (`[PAD]`, `[SEP]`, etc.) and trim extra whitespace.
 
 ## Milestone 4: Dispatch Pipeline & Preferences
 - [ ] Task 4.1: Implement `ClipboardHelper.kt` to push text to `ClipboardManager` and display a transient confirmation `Toast`.
